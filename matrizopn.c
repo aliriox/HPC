@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
-#include <windows.h>
+//#include <windows.h>
 
-#define TamanioMatriz 100000
 
-double performancecounter_diff(LARGE_INTEGER *a, LARGE_INTEGER *b){
-	LARGE_INTEGER freq;
-	QueryPerformanceFrequency(&freq);
-	return (double)(a->QuadPart - b->QuadPart) / (double)freq.QuadPart;
-}
+#define TamanioMatriz 1000
+
+//double performancecounter_diff(LARGE_INTEGER *a, LARGE_INTEGER *b){
+//	LARGE_INTEGER freq;
+//	QueryPerformanceFrequency(&freq);
+//	return (double)(a->QuadPart - b->QuadPart) / (double)freq.QuadPart;
+//}
 
 void EscribirArchivo(float **Matriz,char nombre[]){
 
@@ -35,8 +37,9 @@ int main(){
 	float ** Matriz1;
 	float ** Matriz2;
 	float ** Resultado;
-	LARGE_INTEGER t_ini, t_fin;
-	double secs;
+	//LARGE_INTEGER t_ini, t_fin;
+	//double secs;
+	//struct timeval comienzo, final;
 
 	Matriz1 = (float**) malloc (TamanioMatriz*sizeof(float*));
 	Matriz2 =  (float**) malloc (TamanioMatriz*sizeof(float*));
@@ -58,26 +61,30 @@ int main(){
 	}
 
 	// llenar matrizes con valores aleatorios
+	
+	printf("llenando matrizes...\n");
 
 	float a = 1.0;
 	for(int i = 0; i < TamanioMatriz; i++){
 		for(int j = 0; j < TamanioMatriz; j++){
 			float num = ((float)rand()/(float)(RAND_MAX) * a);
+			float num2 = ((float)rand()/(float)(RAND_MAX) * a);
 			Matriz1[i][j] = num;
+			Matriz2[i][j] = num2;
 		}
 	}
 
-	for(int i = 0; i < TamanioMatriz; i++){
-		for(int j = 0; j < TamanioMatriz; j++){
-			float num = ((float)rand()/(float)(RAND_MAX) * a);
-			Matriz2[i][j] = num;
-		}
-	}
+	EscribirArchivo(Matriz1,"entrada1omp.csv");
+	EscribirArchivo(Matriz2,"entrada2omp.csv");
 
-
+	printf("fin de llenado... 100-P\n");
+	printf("multiplicando matrizes...\n");
 	// multiplicacion de matrizes	
 
-	QueryPerformanceCounter(&t_ini);
+	//QueryPerformanceCounter(&t_ini);
+	//gettimeofday(&comienzo, NULL);
+	clock_t inicio = clock();
+
 	for (int i = 0;i < TamanioMatriz; i++){
 		for (int j = 0;j < TamanioMatriz; j++){
 			Resultado[i][j]=0;
@@ -86,18 +93,21 @@ int main(){
           	}
        	}
     }
-    QueryPerformanceCounter(&t_fin);
+
+    clock_t final = clock();
+    //gettimeofday(&final, NULL);
+    //QueryPerformanceCounter(&t_fin);
+
+    printf("finalizacion de la multiplicacion... 100-P\n");
+
+    // mostramos el tiempo de ejecucion del programa
+
+  	//printf("Duración del programa: %.16f \n", (final.tv_sec+(float)final.tv_usec/1000000)-(comienzo.tv_sec+(float)comienzo.tv_usec/1000000));
+  	printf("Duración de la multiplicacion: %.16f \n", (double)(final-inicio)/CLOCKS_PER_SEC);
 
 	// mostrar matrizes
 
     EscribirArchivo(Resultado,"resultadoMatrizOpenMP.csv");
-
-
-    // mostramos el tiempo de ejecucion del programa
-
-    secs = performancecounter_diff(&t_fin, &t_ini);
-  	printf("%.16g milliseconds\n", secs * 1000.0);
-
 
   	// liberar memoria
 	for(int i = 0; i < TamanioMatriz; i++){
