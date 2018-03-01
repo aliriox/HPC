@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #include <time.h>
+#include <omp.h>
 //#include <windows.h>
 
 
-#define TamanioMatriz 1000
+#define TamanioMatriz 1500
 
 //double performancecounter_diff(LARGE_INTEGER *a, LARGE_INTEGER *b){
 //	LARGE_INTEGER freq;
@@ -83,7 +84,7 @@ int main(){
 
 	//QueryPerformanceCounter(&t_ini);
 	//gettimeofday(&comienzo, NULL);
-	clock_t inicio = clock();
+	double begin1 = omp_get_wtime( );
 
 	for (int i = 0;i < TamanioMatriz; i++){
 		for (int j = 0;j < TamanioMatriz; j++){
@@ -94,16 +95,46 @@ int main(){
        	}
     }
 
-    clock_t final = clock();
+    double end1 = omp_get_wtime();
     //gettimeofday(&final, NULL);
     //QueryPerformanceCounter(&t_fin);
 
-    printf("finalizacion de la multiplicacion... 100-P\n");
+    printf("finalizacion de la multiplicacion sin paralelizar... 100-P\n");
 
     // mostramos el tiempo de ejecucion del programa
 
   	//printf("Duración del programa: %.16f \n", (final.tv_sec+(float)final.tv_usec/1000000)-(comienzo.tv_sec+(float)comienzo.tv_usec/1000000));
-  	printf("Duración de la multiplicacion: %.16f \n", (double)(final-inicio)/CLOCKS_PER_SEC);
+  	printf("Duración de la multiplicacion sin paralelizar: %.16f \n", end1 - begin1);
+
+	printf ( "\n\n" );
+	printf ( "Number of processors available = %d\n", omp_get_num_procs ( ) );
+	printf ( "Number of threads =  %d\n\n", omp_get_max_threads ( ) );
+
+    int i,j,k = 0;
+	double begin2 = 0.0;
+
+    # pragma omp parallel shared(Resultado,Matriz1,Matriz2) private(i,j,k)
+    # pragma opm for
+
+    begin2 = omp_get_wtime( );
+
+	for (i = 0;i < TamanioMatriz; i++){
+		for (j = 0;j < TamanioMatriz; j++){
+			Resultado[i][j]=0;
+         	for (k = 0;k < TamanioMatriz; k++){
+         		Resultado[i][j] = Resultado[i][j] + Matriz1[i][k] * Matriz2[k][j];
+          	}
+       	}
+    }
+
+    double end2 = omp_get_wtime( );
+
+    printf("finalizacion de la multiplicacion paralelizado... 100-P\n");
+
+    // mostramos el tiempo de ejecucion del programa
+
+  	//printf("Duración del programa: %.16f \n", (final.tv_sec+(float)final.tv_usec/1000000)-(comienzo.tv_sec+(float)comienzo.tv_usec/1000000));
+  	printf("Duración de la multiplicacion paralelizado: %.16f \n", (end2 - begin2));
 
 	// mostrar matrizes
 
