@@ -6,7 +6,7 @@
 //#include <windows.h>
 
 
-#define TamanioMatriz 1500
+#define TamanioMatriz 800
 
 //double performancecounter_diff(LARGE_INTEGER *a, LARGE_INTEGER *b){
 //	LARGE_INTEGER freq;
@@ -16,12 +16,13 @@
 
 void EscribirArchivo(float **Matriz,char nombre[]){
 
+
 	FILE *fp;
 	fp = fopen (nombre,"w");
 
 	for(int i = 0; i < TamanioMatriz; i++){
 		for(int j = 0; j < TamanioMatriz; j++){
-			char array[10];
+			char array[50];
 			sprintf(array, "%f", Matriz[i][j]);
 			fputs(array, fp);
 			fputs(";", fp);
@@ -30,6 +31,7 @@ void EscribirArchivo(float **Matriz,char nombre[]){
 	}
 
 	fclose(fp);
+
 
 }
 
@@ -78,7 +80,6 @@ int main(){
 	EscribirArchivo(Matriz1,"entrada1omp.csv");
 	EscribirArchivo(Matriz2,"entrada2omp.csv");
 
-	printf("fin de llenado... 100-P\n");
 	printf("multiplicando matrizes...\n");
 	// multiplicacion de matrizes	
 
@@ -88,7 +89,7 @@ int main(){
 
 	for (int i = 0;i < TamanioMatriz; i++){
 		for (int j = 0;j < TamanioMatriz; j++){
-			Resultado[i][j]=0;
+			Resultado[i][j]=0.0;
          	for (int k = 0;k < TamanioMatriz; k++){
          		Resultado[i][j] = Resultado[i][j] + Matriz1[i][k] * Matriz2[k][j];
           	}
@@ -96,6 +97,7 @@ int main(){
     }
 
     double end1 = omp_get_wtime();
+
     //gettimeofday(&final, NULL);
     //QueryPerformanceCounter(&t_fin);
 
@@ -106,21 +108,24 @@ int main(){
   	//printf("Duración del programa: %.16f \n", (final.tv_sec+(float)final.tv_usec/1000000)-(comienzo.tv_sec+(float)comienzo.tv_usec/1000000));
   	printf("Duración de la multiplicacion sin paralelizar: %.16f \n", end1 - begin1);
 
-	printf ( "\n\n" );
+  	//omp_set_num_threads(8);
+
+  	
 	printf ( "Number of processors available = %d\n", omp_get_num_procs ( ) );
 	printf ( "Number of threads =  %d\n\n", omp_get_max_threads ( ) );
 
     int i,j,k = 0;
 	double begin2 = 0.0;
 
+
     # pragma omp parallel shared(Resultado,Matriz1,Matriz2) private(i,j,k)
-    # pragma opm for
+    # pragma opm for schedule(Dynamic, 100)
 
     begin2 = omp_get_wtime( );
 
 	for (i = 0;i < TamanioMatriz; i++){
 		for (j = 0;j < TamanioMatriz; j++){
-			Resultado[i][j]=0;
+			Resultado[i][j]=0.0;
          	for (k = 0;k < TamanioMatriz; k++){
          		Resultado[i][j] = Resultado[i][j] + Matriz1[i][k] * Matriz2[k][j];
           	}
@@ -149,6 +154,8 @@ int main(){
 	free(Matriz1);
 	free(Matriz2);
 	free(Resultado);
+
+	printf("Memoria dinamica liberada..... FIN!  \n");
 	return 0;
 
 }
