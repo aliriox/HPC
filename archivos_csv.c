@@ -33,6 +33,35 @@ int Detected_columns(FILE *fp, char nombre[100]){
 	return i;
 }
 
+void ExtracData(FILE *fp,float *M ,char nombre[], int Rows, int Columns){
+
+	fp = fopen(nombre,"r");
+	char cadena[N];
+	char *tok;
+
+	for(int i = 0; i < Rows; i++){
+		fscanf(fp,"%s",cadena);
+		tok = strtok(cadena, ";");
+		for(int j = 0; j < Columns; j++){
+			M[i * Columns + j] = strtod(tok,NULL);
+			tok = strtok(NULL, ";");
+		}
+	}
+	fclose(fp);
+
+}
+
+void printMatriz(float *Matriz, int f, int c){
+	for(int i = 0; i < f; i++){
+		for(int j = 0; j < c; j++){
+			printf("[%f]", Matriz[i * c + j]);
+		}
+		printf("\n");
+	}
+}
+
+
+/*
 int main(int argc, char *argv[]){
 
 	char nombre[N] = "entrada1omp.csv";
@@ -52,14 +81,15 @@ int main(int argc, char *argv[]){
 	int columns_1 = Detected_columns(fp,nombre);
 	printf("El numero de columnas es: %d\n", columns_1);
 	
-	/* metodo de transformacion string a float
+	metodo de transformacion string a float
 		
 	float a;
 	
 	a = strtod(tok , NULL);
 	printf("%f", a);
 	
-	*/
+	
 	return 0;
 	
 }
+*/
