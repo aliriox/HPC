@@ -9,7 +9,7 @@ __global__ void KernelGPU(float *d_a, float *d_b, float *d_c,int f1, int M, int 
 
 	int i = threadIdx.y + blockDim.y * blockIdx.y;
 	int j = threadIdx.x + blockDim.x * blockIdx.x;
-
+	
 	if(i < f1 && j <  c2){
 		float Pvalue = 0.0;
 		for(int k = 0; k < M; k++){
@@ -17,8 +17,6 @@ __global__ void KernelGPU(float *d_a, float *d_b, float *d_c,int f1, int M, int 
 		}
 		d_c[i * c2 + j] = Pvalue;
 	}
-
-
 }
 
 
