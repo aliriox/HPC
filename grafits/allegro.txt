@@ -1,4 +1,2 @@
-#
-
 # instalar allegro5
 sudo apt-get install liballegro5-dev

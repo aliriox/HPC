@@ -2,3 +2,8 @@
 gcc -o HolaMundo1 HolaMundo1.c `pkg-config --cflags --libs gtk+-3.0`
 # como compilar usando allegro5
 gcc -Wall allegro.c -o allegro `pkg-config --libs allegro_primitives-5`
+
+# estructura de archicos csv para ambos archivos, puntos y segmentos de linea entre puntos
+
+	x1;x2;x3;x4;x5;x6;
+	y1;y2;y3;y4;y5;y6;
