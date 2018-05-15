@@ -1,0 +1,145 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuda.h>
+#include "archivos_csv.c"
+#define BLOCK_SIZE 2
+
+
+__global__ void KernelGPU(float *d_a, float *d_b, float *d_c,int f1, int M, int c2){
+
+        __shared__ float Mds[BLOCK_SIZE][BLOCK_SIZE];
+        __shared__ float Nds[BLOCK_SIZE][BLOCK_SIZE];
+
+        int bx = blockIdx.x;
+        int by = blockIdx.y;
+        int tx = threadIdx.x;
+        int ty = threadIdx.y;
+
+        int i = ty + (BLOCK_SIZE * by);
+        int j = tx + (BLOCK_SIZE * bx);
+
+        float Pvalue = 0.0;
+        for(int m = 0; m < (c2/BLOCK_SIZE); ++m){
+                Mds[ty][tx] = d_a[(i*c2) + (m*BLOCK_SIZE) + tx];
+                Nds[ty][tx] = d_b[(m*BLOCK_SIZE+ty)*c2 + j];
+                __syncthreads();
+
+                for(int k = 0; k < BLOCK_SIZE; ++k){
+                        Pvalue += Mds[ty][k] * Nds[k][tx];
+                }
+                __syncthreads();
+        }
+        d_c[i * c2 + j] = Pvalue;
+}
+
+
+void createVector(float *a, int f1, float *b, int c2, int inteM, float *c,FILE *fp){
+
+        // definiendo variables y reservando memoria
+
+        float *d_a, *d_b, *d_c;
+        unsigned char *s;
+        unsigned char *d_s;
+        int blocksize = 32;
+
+        cudaMalloc((void**)&d_a, f1 * inteM * sizeof(float));
+        cudaMemcpy(d_a, a, f1 * inteM * sizeof(float), cudaMemcpyHostToDevice);
+
+        cudaMalloc((void**)&d_b, inteM * c2 * sizeof(float));
+        cudaMemcpy(d_b, b, inteM * c2 * sizeof(float), cudaMemcpyHostToDevice);
+
+        cudaMalloc((void**)&d_s, 1000* sizeof(char));
+
+        cudaMalloc((void**)&d_c, f1 * c2 * sizeof(float));
+
+        dim3 dimBlock(blocksize , blocksize , 1);
+        dim3 dimGrid(ceil(inteM/float(blocksize)),ceil(f1/float(blocksize)),1);
+
+
+        KernelGPU<<< dimGrid, dimBlock>>>(d_a,d_b,d_c,f1,inteM,c2);
+
+        cudaMemcpy(c,d_c, f1 * c2 * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(s,d_s, 1000*sizeof(char), cudaMemcpyDeviceToHost);
+
+        cudaFree(d_a);
+        cudaFree(d_b);
+        cudaFree(d_c);
+
+}
+
+int main(int argc, char *argv[]){
+
+        if(argc != 3){
+                printf("no se han ingresado los archivos necesarios\n");
+        }
+
+        FILE *fp;
+        fp = fopen(argv[1], "r");
+
+        if(fp==NULL){
+                fputs("File error",stderr);
+                return 1;
+        }
+        fclose(fp);
+
+        fp = fopen(argv[2], "r");
+
+        if(fp == NULL){
+                fputs("file error", stderr);
+                return 1;
+        }
+        fclose(fp);
+
+        FILE *fseguimiento;
+        fseguimiento = fopen("seguimiento.txt",'r');
+
+        clock_t time_inicial = clock();
+
+        int Rows_1 = Detected_rows(fp,argv[1]);
+                int Columns_1 = Detected_columns(fp,argv[1]);
+
+        int Rows_2 = Detected_rows(fp,argv[2]);
+        int Columns_2 = Detected_columns(fp,argv[2]);
+
+        if(Columns_1 != Rows_2){
+                printf("las matrizes no cumplen los requisitos para la multiplicacion entre estas");
+                return 1;
+        }
+
+        int inteM = Columns_1;
+
+        float *Matriz1 = (float*)malloc(Rows_1 * inteM * sizeof(float));
+        float *Matriz2 = (float*)malloc(inteM * Columns_2 * sizeof(float));
+        float *MatrizR = (float*)malloc(Rows_1 * Columns_2 * sizeof(float));
+
+        ExtracData(fp, Matriz1,argv[1],Rows_1,inteM);
+        ExtracData(fp, Matriz2,argv[2],inteM,Columns_2);
+
+        printf("Matriz1,%d,%d\n",Rows_1, Columns_1);
+              printf("Matriz 1: \n");
+        printMatriz(Matriz1,Rows_1, inteM);
+        printf("\n");
+        printf("Matriz2,%d,%d\n",Rows_2, Columns_2);
+        printf("matriz 2: \n");
+        printMatriz(Matriz2,inteM,Columns_2);
+        printf("\n");
+
+        createVector(Matriz1,Rows_1,Matriz2,Columns_2,inteM,MatrizR,fseguimiento);
+
+        clock_t time_final = clock();
+        double ejecucion = (double)(time_final-time_inicial)/CLOCKS_PER_SEC;
+        printf("tiempo de ejecucion en segundos: %.16g\n\n", ejecucion);
+
+        printf("matriz Respuesta: \n");
+        printMatriz(MatrizR, Rows_1, Columns_2);
+        printf("\n");
+
+        free(Matriz1);
+        free(Matriz2);
+        free(MatrizR);
+
+        return 0;
+
+}
+
+

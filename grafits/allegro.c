@@ -1,5 +1,6 @@
 #include <stdio.h> 
-#include <stdlib.h> 
+#include <stdlib.h>
+#include "../archivos_csv/archivos_csv.c" // Manejo de archivos csv
 #include <allegro5/allegro.h> // Librería inicial de Allegro 
 #include <allegro5/allegro_primitives.h> // Addon de primitivas (figuras)
 
@@ -10,8 +11,6 @@
 #define AZUL al_map_rgb(0,0,255) 
 #define VERDE al_map_rgb(0,255,0)
 #define ROJO al_map_rgb(255,0,0)
-#define N 2
-#define M 600
 
 // Redefinición de tipos 
 typedef ALLEGRO_DISPLAY aDisplay; 
@@ -47,10 +46,18 @@ void colorearPantalla(){
     al_clear_to_color(BLANCO); // Limpiar la ventana y establecer un color de fondo RGB (color rojo: R=0=0.0, G=255=1.0, B=0=0.0)
 }
 
-void Puntos(int *v){
-    for(int i = 0; i < M*N; i++){
-        al_draw_filled_circle(v[i]+10, VENTANA_Y-v[i+M]-10, 1.0, ROJO); // Crear un círculo: x = 200px, y = 160px, radio = 130px, color
+void Puntos(int *v, int Columnas){
+    for(int i = 0; i < Columnas; i++){
+        al_draw_filled_circle(v[i]+10, VENTANA_Y-v[i+Columnas]-10, 2.0, ROJO); // Crear un círculo: x = 200px, y = 160px, radio = 130px, color
+        //printf("filas: %d, columnas: %d\n", v[i]+10, VENTANA_Y-v[i+Columnas]-10);
     }
+}
+
+void Lines(int *v, int Columnas){
+    for(int i = 0; i < Columnas-1; i++){
+        al_draw_line(v[i]+10, VENTANA_Y-v[i+Columnas]-10, v[i+1]+10, VENTANA_Y-v[i+1+Columnas]-10, NEGRO, 1.0);
+    }
+    al_draw_line(v[Columnas-1]+10,VENTANA_Y-v[Columnas-1+Columnas]-10, v[0]+10,VENTANA_Y-v[Columnas]-10, NEGRO, 1.0);
 }
 
 void tabla(){
@@ -86,35 +93,62 @@ void tabla(){
 
 }
 
-void Graficar(int *v){
+void Graficar(int *vp, int cp,  int *vl, int cl){
     inicializar(); 
     colorearPantalla();
     tabla();
-    Puntos(v);
+    Puntos(vp,cp);
+    Lines(vl,cl);
     al_flip_display(); // Dibujar en pantalla todo lo almacenado en el buffer, en este caso solamente está el círculo de arriba
     getchar(); // cerrar ventana despues de pulsar una tecla (enfoque-->terminal)
     finalizar(); 
 } 
 
-int main(){
-    
-    int *vector = (int*)malloc(N*M*sizeof(int));
+int main(int argc, char *argv[]){
 
-    for(int i = 0; i < N; i++){
-        for(int j = 0; j < M; j++){
-            bool tmp = true;
-            while(tmp){
-                int num = rand() %  (M-20) + 1;
-                if(num <= 580){
-                    vector[i * M + j] = num;
-                    tmp = false;
-                }
-            }
-            //printf("vector[%d] = %d\n", i * M + j,vector[i*M+j]);
-            //vector[i*M+j] = i*M+j+10;
-        }
+    if(argc != 3){
+        printf("No se han ingresado las variables necesarias\n");
+        return 1;
     }
-    Graficar(vector);
-    free(vector);
+
+    FILE *fp;
+    fp = fopen(argv[1],"r");
+
+    if(fp == NULL){
+        printf("Archivo de puntos no encontrado... \n");
+        return 1;
+    }
+
+    fclose(fp);
+
+    fp = fopen(argv[2],"r");
+
+    if(fp == NULL){
+        printf("Archivo de lineas no encontrado... \n");
+        return 1;
+    }
+
+    fclose(fp);
+
+    int rowsP = Detected_rows(fp, argv[1]);
+    int rowsL = Detected_rows(fp,argv[2]);
+
+    if(rowsP != 2 || rowsL != 2){
+        printf("El arhivo contiene mas de dos filas, no se puede interpretar los pares ordenados...\n");
+        return 1;
+    }
+
+    int columnsP = Detected_columns(fp, argv[1]);
+    int columnsL = Detected_columns(fp, argv[2]);
+    int *vectorP = (int*)malloc(2*columnsP*sizeof(int));
+    int *vectorL = (int*)malloc(2*columnsL*sizeof(int));
+
+    ExtracDatai(fp,vectorP,argv[1],rowsP,columnsP);
+    ExtracDatai(fp,vectorL,argv[2],rowsL,columnsL);
+    
+    Graficar(vectorP, columnsP, vectorL, columnsL);
+
+    free(vectorP);
+    free(vectorL);
     return 0; 
 } 
