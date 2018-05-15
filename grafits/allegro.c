@@ -3,6 +3,7 @@
 #include "../archivos_csv/archivos_csv.c" // Manejo de archivos csv
 #include <allegro5/allegro.h> // Librería inicial de Allegro 
 #include <allegro5/allegro_primitives.h> // Addon de primitivas (figuras)
+#include <unistd.h>
 
 #define VENTANA_X 800 
 #define VENTANA_Y 600
@@ -46,18 +47,20 @@ void colorearPantalla(){
     al_clear_to_color(BLANCO); // Limpiar la ventana y establecer un color de fondo RGB (color rojo: R=0=0.0, G=255=1.0, B=0=0.0)
 }
 
-void Puntos(int *v, int Columnas){
-    for(int i = 0; i < Columnas; i++){
+void Puntos(int *v, int Columnas, int tope){
+    for(int i = 0; i < tope; i++){
         al_draw_filled_circle(v[i]+10, VENTANA_Y-v[i+Columnas]-10, 2.0, ROJO); // Crear un círculo: x = 200px, y = 160px, radio = 130px, color
         //printf("filas: %d, columnas: %d\n", v[i]+10, VENTANA_Y-v[i+Columnas]-10);
     }
 }
 
-void Lines(int *v, int Columnas){
-    for(int i = 0; i < Columnas-1; i++){
+void Lines(int *v, int Columnas, int tope){
+
+    al_draw_line(v[Columnas-1]+10,VENTANA_Y-v[Columnas-1+Columnas]-10, v[0]+10,VENTANA_Y-v[Columnas]-10, NEGRO, 1.0);
+
+    for(int i = 0; i < tope; i++){
         al_draw_line(v[i]+10, VENTANA_Y-v[i+Columnas]-10, v[i+1]+10, VENTANA_Y-v[i+1+Columnas]-10, NEGRO, 1.0);
     }
-    al_draw_line(v[Columnas-1]+10,VENTANA_Y-v[Columnas-1+Columnas]-10, v[0]+10,VENTANA_Y-v[Columnas]-10, NEGRO, 1.0);
 }
 
 void tabla(){
@@ -94,12 +97,34 @@ void tabla(){
 }
 
 void Graficar(int *vp, int cp,  int *vl, int cl){
-    inicializar(); 
-    colorearPantalla();
-    tabla();
-    Puntos(vp,cp);
-    Lines(vl,cl);
-    al_flip_display(); // Dibujar en pantalla todo lo almacenado en el buffer, en este caso solamente está el círculo de arriba
+    inicializar();
+
+    int i = 1;
+    while(i <= cp){
+        colorearPantalla();
+        tabla();
+        Puntos(vp,cp,i);
+        //Lines(vl,cl);
+        al_flip_display(); // Dibujar en pantalla todo lo almacenado en el buffer
+        sleep(1); // retardo de 2 segundos
+        i++;
+    }
+
+    printf("finish points\n");
+    i = 0;
+
+    while(i < cl){
+        colorearPantalla();
+        tabla();
+        Puntos(vp,cp,cp);
+        Lines(vl,cl,i);
+        al_flip_display(); // Dibujar en pantalla todo lo almacenado en el buffer
+        sleep(1); // retardo de 2 segundos
+        i++;
+    }
+
+    printf("finsh lines...\n");
+    
     getchar(); // cerrar ventana despues de pulsar una tecla (enfoque-->terminal)
     finalizar(); 
 } 
