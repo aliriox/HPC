@@ -20,18 +20,31 @@ __global__ void insert(int *a, int t){
 
 }
 
+void imp(int *a, int n){
+	for(int i = 0; i < n; i++){
+		cout << a[i]<<endl;
+	}
+	cout<<endl<<endl;
+}
+
 void cuda(int *a, int n){
 
 	int *array;
 
-	array = (int*)malloc(n * sizeof(int));
+	cudaMalloc((void**)&array, n * sizeof(int));
 	cudaMemcpy(array,a,n * sizeof(int),cudaMemcpyHostToDevice);
+
+	cout<< "entro al kernel" <<endl;
 
 	insert<<<1024,1>>>(array,n);
 
+	cout<<"salgo del kernel"<<endl;
+	
 	cudaMemcpy(a,array,n * sizeof(int),cudaMemcpyDeviceToHost);
-
-	free(array);
+	
+	cout<<"libero memoria"<<endl;
+	
+	cudaFree(array);
 
 }
 
@@ -41,17 +54,18 @@ int main(){
 	cin >> n;
 
 	int a[n];
+	int *vec;
+        vec = (int*)malloc(n*sizeof(int));
 
 	for(int i = 0; i < n; i++){
 		cin >> a[i];
+		vec[i] = a[i];
 	}
+	
+	cuda(vec,n);
 
-	cuda(a,n);
+	imp(vec,n);
 
-	for(int i = 0; i < n; i++){
-		cout << a[i] << " ";
-	}
-	cout<<endl<<endl;
-
+	free(vec);
 	return 0;
 }
