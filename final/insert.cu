@@ -8,15 +8,12 @@ __global__ void insert(int *a, int t){
 
 	int i = blockIdx.x*blockDim.x+threadIdx.x;
 
-	__shared__ int tmp[t];
-	tmp[i] = a[i];
-
 	if(i < t-1){
 		for(int k = 0; k < t-1; k++){
-			if(tmp[k] > tmp[k+1]){
-				int aux = tmp[k];
-				tmp[k] = tmp[k+1];
-				tmp[k+1] = aux;
+			if(a[k] > a[k+1]){
+				int aux = a[k];
+				a[k] = a[k+1];
+				a[k+1] = aux;
 			}
 		}
 	}
