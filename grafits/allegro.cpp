@@ -7,7 +7,7 @@
 
 using namespace std;
 
-#define VENTANA_X 800 
+#define VENTANA_X 1000 
 #define VENTANA_Y 600
 #define NEGRO al_map_rgb(0,0,0)
 #define BLANCO al_map_rgb(255,255,255)
@@ -113,7 +113,7 @@ void Graficar(Point vp[], int cp, Point vl[], int cl){
         Puntos(vp,cp,i);
         //Lines(vl,cl);
         al_flip_display(); // Dibujar en pantalla todo lo almacenado en el buffer
-        sleep(1); // retardo de 2 segundos
+        //sleep(1); // retardo de 2 segundos
         i++;
     }
 
