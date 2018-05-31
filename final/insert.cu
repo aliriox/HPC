@@ -8,11 +8,19 @@ __global__ void insert(int *a, int t){
 
 	int i = blockIdx.x*blockDim.x+threadIdx.x;
 
-	if(i < t-1){
-		if(a[i] > a[i+1]){
-			int aux = a[i];
-			a[i] = a[i+1];
-			a[i+1] = aux;
+	int cont = 0;
+
+	while(cont <= i*10000){
+		cont++;
+	}
+
+	if(i < t){
+		for(int k = 0; k < t-1; k++){
+			if(a[k] > a[k+1]){
+				int aux = a[k];
+				a[k] = a[k+1];
+				a[k+1] = aux;
+			}
 		}
 	}
 }
@@ -31,9 +39,7 @@ void cuda(int *a, int n){
 	cudaMalloc((void**)&array, n * sizeof(int));
 	cudaMemcpy(array,a,n * sizeof(int),cudaMemcpyHostToDevice);
 
-	for(int i = 0; i < n; i++){
-		insert<<<1024,1>>>(array,n);
-	}
+	insert<<<1024,1>>>(array,n);
 	
 	cudaMemcpy(a,array,n * sizeof(int),cudaMemcpyDeviceToHost);
 	
